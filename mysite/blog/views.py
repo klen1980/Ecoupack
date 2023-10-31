@@ -1,4 +1,7 @@
 from django.shortcuts import render, get_object_or_404
+
+
+
 from .models import Post, Comment
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.generic import ListView
@@ -8,6 +11,7 @@ from django.views.decorators.http import require_POST
 from taggit.models import Tag
 from django.db.models import Count
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+
 
 
 def post_search(request):
@@ -100,6 +104,21 @@ def post_detail(request, year, month, day,post):
     similar_posts = similar_posts.annotate(same_tags=Count('tags')).order_by('-same_tags','-publish')[:4]
     return render(request,
                   'blog/post/detail.html',
+                  {'post': post})
+
+def post_share(request, post_id):
+    post = get_object_or_404(Post,
+                             id=post_id,
+                             status=Post.Status.PUBLISHED)
+    if request.method == 'POST':
+        form = EmailPostForm(request.POST)
+        if form.is_valid():
+            cd = form.cleaned_data
+    else:
+        form = EmailPostForm()
+    return render(request, 'blog/post/share.html', {'post': post,
+                                                    'form': form})
+
                   {'post': post,
                    'comments':comments,
                   'form': form,
@@ -120,4 +139,5 @@ def post_comment(request, post_id):
                             {'post':post,
                              'form':form,
                              'comment': comment})
+
 # Create your views here.
